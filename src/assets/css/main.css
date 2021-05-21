@@ -1,0 +1,5 @@
+*{padding: 0; margin: 0; outline: none; word-break: break-word;}
+html{font-size: calc(100vw/7.5); color: #333;}
+body{font-family: 'PingFang SC','Helvetica Neue',"微软雅黑",'Arial'; font-size: 12px;}
+ul,li{list-style: none;}
+input::-webkit-input-placeholder{ color: #999;}
