@@ -1,16 +1,20 @@
 <template lang="html">
     <div class="cart">
         <van-empty image="search" description="购物车空空如也" v-if="getUser.cartlist.length==0" />
-        <div class="cart-item" v-for="item in cartlist" :key="item._id" @click="cartChecked(item)">
+        <div class="cart-item" v-for="item in cartlist" :key="item._id">
             <van-swipe-cell>
                 <van-checkbox v-model="item.checked"></van-checkbox>
-                <van-card :num="item.sum" :price="item.info.price+'.00'" :desc="item.info.brand" :title="item.info.name" :thumb="item.info.pic"></van-card>
+                <van-card :price="item.info.price+'.00'" :desc="item.info.brand" :title="item.info.name" :thumb="item.info.pic" @click-thumb="cartChecked(item)">
+                    <template #footer>
+                        <van-stepper v-model="item.info.num" theme="round" button-size="20" @change="editSum(item)" />
+                    </template>
+                </van-card>
                 <template #right>
-                    <van-button square text="删除" type="danger" class="delete-button" @click="delPhone(item)" />
+                    <van-button square text="删除" type="danger" class="delete-button" @click="delGoods(item)" />
                 </template>
             </van-swipe-cell>
         </div>
-        <van-submit-bar :price="totalPrice" button-text="提交订单">
+        <van-submit-bar :price="totalPrice" button-text="提交订单" v-if="getUser.cartlist.length!=0">
             <van-checkbox v-model="isCheckedAll">全选</van-checkbox>
             <template #tip>你的收货地址不支持同城送</template>
         </van-submit-bar>
@@ -19,13 +23,15 @@
 
 <script>
 import Vue from 'vue'
-import {Card,SubmitBar,Checkbox,Empty,SwipeCell} from 'vant'
-Vue.use(Card).use(SubmitBar).use(Checkbox).use(Empty).use(SwipeCell)
+import {Card,SubmitBar,Checkbox,Empty,SwipeCell,Stepper} from 'vant'
+Vue.use(Card).use(SubmitBar).use(Checkbox).use(Empty).use(SwipeCell).use(Stepper)
+
 export default {
     data(){
         return {
             checked: false,
-            cartlist: []
+            cartlist: [],
+            editRes: []
         }
     },
     watch: {
@@ -57,7 +63,7 @@ export default {
             let num = 0
             this.cartlist.forEach(item=>{
                 if(item.checked){
-                    num += item.info.price * 100 * item.sum
+                    num += item.info.price * 100 * item.info.num
                 }
             })
             return num
@@ -71,22 +77,20 @@ export default {
         getCartlist(userInfo){
             if(userInfo.cartlist.length){
                 let {cartlist} = userInfo
-                // 统计每款商品数量
-                let getSum = cartlist.reduce((pre,cur)=>{
-                    pre[cur] = cur in pre ? pre[cur]+1 : 1
-                    return pre
-                },{})
+                let cartlistid = cartlist.map(item=>item.id)
                 this.$http.get('/api/cart',{
                     params: {
-                        cartlist: JSON.stringify(cartlist)
+                        cartlist: JSON.stringify(cartlistid)
                     }
                 }).then(res=>{
                     this.cartlist = res.data.data
                     this.cartlist = this.cartlist.map(item=>({
                         checked: false,
-                        info: item,
-                        sum: getSum[item._id]
+                        info: item
                     }))
+                    this.cartlist.forEach(item=>{
+                        this.editRes.push({id:item.info.id,num:item.info.num})
+                    })
                 })
             }
         },
@@ -95,20 +99,35 @@ export default {
             item.checked = !item.checked
         },
         // 删除商品
-        delPhone(item){
+        delGoods(item){
             this.cartlist.splice(this.cartlist.indexOf(item),1)
             this.$http.delete('/api/cart',{
                 data: {
                     username: this.getUser.username,
-                    phoneid: item.info._id
+                    goodsid: item.info._id
                 }
             }).then(res=>{
-                // 更新store中数据
-                this.$store.commit('setUser',{
-                    cartlist: res.data.data
-                })
+                this.editRes = res.data.data
+            })
+        },
+        // 修改商品数量
+        editSum(item){
+            this.$http.put('/api/cart',{
+                username: this.getUser.username,
+                goodsid: item.info._id,
+                num: item.info.num
+            }).then(res=>{
+                this.editRes = res.data.data
             })
         }
+    },
+    // 离开页面时再提交mutation
+    beforeRouteLeave(to,from,next){
+        // 更新store中数据
+        this.$store.commit('setUser',{
+            cartlist: this.editRes
+        })
+        next()
     }
 }
 </script>
@@ -118,4 +137,5 @@ export default {
 .cart-item .van-card{ padding-left: 30px;}
 .cart-item .delete-button{ height: 100%;}
 .cart-item .van-checkbox{ position: absolute; z-index: 5; left: 5px; top: 50%; margin-top: -10px;}
+.cart-item .van-stepper{ position: absolute; z-index: 10; right: 8px; bottom: 8px;}
 </style>

@@ -4,6 +4,9 @@ let local = {
     },
     fetch(key){
         return JSON.parse(localStorage.getItem(key))||{}
+    },
+    remove(key){
+        localStorage.removeItem(key)
     }
 }
 export default {

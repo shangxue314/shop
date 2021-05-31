@@ -1,7 +1,7 @@
 <template lang="html">
     <div class="cart">
         <van-empty image="search" description="收藏夹空空如也" v-if="getUser.favlist.length==0" />
-        <van-card v-for="item in favlist" :key="item._id" :price="item.price+'.00'" :desc="item.brand" :title="item.name" :thumb="item.pic" @click="toPhone(item)"></van-card>
+        <van-card v-for="item in favlist" :key="item._id" :price="item.price+'.00'" :desc="item.brand" :title="item.name" :thumb="item.pic" @click="toGoods(item)"></van-card>
     </div>
 </template>
 
@@ -49,8 +49,8 @@ export default {
 
         },
         // 跳转商品详情
-        toPhone(item){
-            this.$router.push({path: '/phone/'+item._id})
+        toGoods(item){
+            this.$router.push({path: '/goods/'+item._id})
         }
     }
 }

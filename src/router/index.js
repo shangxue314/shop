@@ -1,15 +1,18 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import Phones from '@/views/phones'
+import Home from '@/views/home'
 import Add from '@/views/add'
-import Phone from '@/views/phone'
+import Goods from '@/views/goods'
 import Cart from '@/views/cart'
 import User from '@/views/user'
 import Fav from '@/views/fav'
 import Login from '@/views/login'
+import Sign from '@/views/sign'
 import Config from '@/views/config'
 import AddressList from '@/views/addresslist'
 import AddressEdit from '@/views/addressedit'
+import Sort from '@/views/sort'
+import Search from '@/views/search'
 import store from '@/store'
 Vue.use(Router)
 
@@ -18,12 +21,12 @@ const router = new Router({
     routes: [
         {
             path: '/',
-            name: 'Phones',
+            name: 'Home',
             meta: {
               title: '首页',
               login: false
             },
-            component: Phones
+            component: Home
         },
         {
             path: '/cart',
@@ -47,7 +50,7 @@ const router = new Router({
             path: '/add',
             name: 'Add',
             meta: {
-              title: '添加手机',
+              title: '添加商品',
               login: false
             },
             component: Add
@@ -62,13 +65,13 @@ const router = new Router({
             component: User
         },
         {
-            path: '/phone/:_id',
-            name: 'Phone',
+            path: '/goods/:_id',
+            name: 'Goods',
             meta: {
-                title: '手机详情',
+                title: '商品详情',
                 login: false
             },
-            component: Phone
+            component: Goods
         },
         {
             path: '/login',
@@ -79,11 +82,19 @@ const router = new Router({
             component: Login
         },
         {
+            path: '/sign',
+            name: 'Sign',
+            meta: {
+                title: '注册'
+            },
+            component: Sign
+        },
+        {
             path: '/config',
             name: 'Config',
             meta: {
                 title: '个人信息',
-                login: false
+                login: true
             },
             component: Config
         },
@@ -100,10 +111,37 @@ const router = new Router({
             path: '/addressedit',
             name: 'AddressEdit',
             meta: {
+                title: '新增地址',
+                login: true
+            },
+            component: AddressEdit
+        },
+        {
+            path: '/addressedit/:_id',
+            name: 'AddressEdit',
+            meta: {
                 title: '编辑地址',
                 login: true
             },
             component: AddressEdit
+        },
+        {
+            path: '/sort',
+            name: 'Sort',
+            meta: {
+                title: '分类',
+                login: false
+            },
+            component: Sort
+        },
+        {
+            path: '/search',
+            name: 'Search',
+            meta: {
+                title: '商品搜索',
+                login: false
+            },
+            component: Search
         },
         {
           path: '*',

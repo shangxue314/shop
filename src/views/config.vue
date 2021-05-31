@@ -10,6 +10,7 @@
         <van-field label="性别" v-model="userInfo.sex" input-align="right" readonly clickable @click="showSex=true" right-icon="arrow" />
         <van-field label="出生日期" v-model="userInfo.birth" input-align="right" readonly clickable @click="showBirth=true" right-icon="arrow" />
         <van-field label="收货地址" readonly clickable right-icon="arrow" @click="$router.push({path: '/addresslist'})" />
+        <van-field label="退出登录" readonly clickable right-icon="arrow" @click="checkout" />
         <!--性别选择-->
         <van-popup v-model="showSex" round position="bottom">
             <van-picker title="选择性别" :columns="sex" show-toolbar @cancel="showSex=false" @confirm="onConfirmSex"></van-picker>
@@ -29,12 +30,12 @@
 
 <script>
 import Vue from 'vue'
-import {Field,Icon,Image,Picker,Popup,DatetimePicker,Uploader,Button,Toast} from 'vant'
-Vue.use(Icon).use(Image).use(Field).use(Picker).use(Popup).use(DatetimePicker).use(Uploader).use(Button).use(Toast)
+import {Field,Icon,Image,Picker,Popup,DatetimePicker,Uploader,Button,Toast,Dialog} from 'vant'
+Vue.use(Icon).use(Image).use(Field).use(Picker).use(Popup).use(DatetimePicker).use(Uploader).use(Button).use(Toast).use(Dialog)
+import getUserInfoMixin from '../mixins/getUserInfoMixin.js'
 export default {
     data(){
         return{
-            userInfo: {},
             sex: ['男','女'],
             showSex: false,
             minDate: new Date(1900, 0, 1),
@@ -44,32 +45,17 @@ export default {
             showPhoto: false
         }
     },
-    watch: {
-        // 刷新页面时监听用户信息的变化
-        getUser: {
-            deep: true,
-            handler(newVal){
-                this.getUserInfo(newVal)
-            }
-        }
-    },
+    mixins: [getUserInfoMixin],
     computed: {
-        // 获取store中用户信息
-        getUser(){
-            return this.$store.state.user
-        },
         // 计算性别
         getSex(){
             return this.userInfo.sex == '男' ? '#1989fa' : '#ee0a24'
         }
     },
     created(){
-        this.getUserInfo(this.$store.state.user)
+
     },
     methods: {
-        getUserInfo(data){
-            this.userInfo = Object.assign({},this.userInfo,data)
-        },
         // 确认选择性别
         onConfirmSex(value){
             this.userInfo.sex = value;
@@ -127,8 +113,23 @@ export default {
                 this.$store.commit('setUser',{nickname: this.userInfo.nickname})
                 // 同步更新localstorage中数据
                 this.$local.save('myshop',{
-                    nickname: res.data.data.nickname
+                    username: this.userInfo.username,
+                    nickname: this.userInfo.nickname
                 })
+            })
+        },
+        // 退出登录
+        checkout(){
+            Dialog.confirm({
+                title: '提示',
+                message: '确定退出登录吗'
+            }).then(()=>{
+                // confirm
+                this.$local.remove('myshop')
+                this.$store.commit('setUser','退出')
+                this.$router.replace({path: '/'})
+            }).catch(()=>{
+                // cancel
             })
         }
     }

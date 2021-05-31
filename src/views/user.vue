@@ -38,7 +38,7 @@
             <div class="user-data-view">
                 <van-grid :border="false">
                     <van-grid-item>
-                        <mark v-if="userInfo.coupons">{{userInfo.coupons.length}}</mark>
+                        <mark>0</mark>
                         <p>优惠券</p>
                     </van-grid-item>
                     <van-grid-item>
@@ -60,38 +60,23 @@
 import Vue from 'vue'
 import {Grid,GridItem,Icon,Tag,Image} from 'vant'
 Vue.use(Grid).use(GridItem).use(Icon).use(Tag).use(Image)
+import getUserInfoMixin from '../mixins/getUserInfoMixin.js'
 export default {
     data(){
         return{
-            userInfo: {}
         }
     },
-    watch: {
-        // 刷新页面时监听用户信息的变化
-        getUser: {
-            deep: true,
-            handler(newVal){
-                this.getUserInfo(newVal)
-            }
-        }
-    },
+    mixins: [getUserInfoMixin],
     computed: {
-        // 获取store中用户信息
-        getUser(){
-            return this.$store.state.user
-        },
         // 计算性别
         getSex(){
             return this.userInfo.sex == '男' ? '#1989fa' : '#ee0a24'
         }
     },
     created(){
-        this.getUserInfo(this.$store.state.user)
+
     },
     methods: {
-        getUserInfo(data){
-            this.userInfo = Object.assign({},this.userInfo,data)
-        },
         toConfig(){
             this.$router.push({
                 path: '/config'

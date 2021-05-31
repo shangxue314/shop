@@ -3,8 +3,8 @@
         <van-form @submit="onSubmit">
             <van-field v-model="username" name="用户名" label="用户名" placeholder="用户名" autocomplete="new-password" :rules="[{ required: true, message: '请填写用户名' }]"/>
             <van-field v-model="password" type="password" name="密码" label="密码" placeholder="密码" autocomplete="new-password" :rules="[{ required: true, message: '请填写密码' }]"/>
-            <van-button round block type="info" native-type="submit" color="linear-gradient(to right,#ff6034,#ee0a24)">登录</van-button>
-            <van-button round block type="default" native-type="button" to="/sign">去注册</van-button>
+            <van-field v-model="repassword" type="password" name="密码" label="密码" placeholder="确认密码" autocomplete="new-password" :rules="[{ required: true, message: '请再次填写密码'},{validator, message: '确认密码不一致'}]"/>
+            <van-button round block type="info" native-type="submit" color="linear-gradient(to right,#ff6034,#ee0a24)">注册</van-button>
         </van-form>
     </div>
 </template>
@@ -18,12 +18,13 @@ export default {
     data(){
         return {
             username: '',
-            password: ''
+            password: '',
+            repassword: ''
         }
     },
     methods: {
         onSubmit(){
-            this.$http.post('/api/login',{
+            this.$http.post('/api/sign',{
                 username: this.username,
                 password: Des.Encrypt(this.password)
             }).then(res=>{
@@ -31,26 +32,18 @@ export default {
                     message: res.data.message,
                     onClose: ()=>{
                         if(res.data.code==0){
-                            // 登录成功
-                            this.$local.save('myshop',{
-                                nickname: res.data.data.nickname,
-                                username: res.data.data.username
-                            })
-                            this.$http.get('/api/user',{
-                                params: {
-                                    username: this.username
-                                }
-                            }).then(res=>{
-                                this.$store.commit('setUser',res.data.data)
-                            })
-                            // 登录成功后跳转页面，使用replace替换登录页的历史记录，避免返回上一页时再返回登录页
-                            this.$router.replace('/'+this.$route.query.redirect)
+                            // 注册成功
+                            this.$router.replace('/login')
                         }
                     }
                 })
             }).catch(err=>{
                 console.log(err);
             })
+        },
+        // 两次输入密码校验函数返回 true 表示校验通过，false 表示不通过
+        validator(val) {
+            return this.password === val
         }
     }
 }
