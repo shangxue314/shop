@@ -11,7 +11,7 @@
             <van-goods-action-icon to="/cart" icon="cart-o" text="购物车" :badge="getBadge" />
             <van-goods-action-icon :icon="isComFav.icon" :text="isComFav.text" :color="isComFav.color" @click="addFav" />
             <van-goods-action-button type="warning" text="加入购物车" @click="addCart" />
-            <van-goods-action-button type="danger" text="立即购买" />
+            <van-goods-action-button type="danger" text="立即购买" @click="buyGoods" />
         </van-goods-action>
     </div>
 </template>
@@ -103,6 +103,13 @@ export default {
                 this.$store.commit('setUser',{
                     favlist: res.data.data
                 })
+            })
+        },
+        // 立即购买
+        buyGoods(){
+            this.$router.push({
+                path: '/buy',
+                query: {pid: this.pid}
             })
         }
     }

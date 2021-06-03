@@ -13,11 +13,11 @@
                     <mark v-if="userInfo.favlist">{{userInfo.favlist.length}}</mark>
                     <p>商品收藏</p>
                 </van-grid-item>
-                <van-grid-item>
+                <van-grid-item @click="tip">
                     <mark>0</mark>
                     <p>店铺收藏</p>
                 </van-grid-item>
-                <van-grid-item>
+                <van-grid-item @click="tip">
                     <mark>0</mark>
                     <p>我的足迹</p>
                 </van-grid-item>
@@ -29,19 +29,19 @@
         <div class="user-data">
             <div class="user-data-view">
                 <van-grid :border="false">
-                    <van-grid-item icon="balance-list-o" text="待付款" />
-                    <van-grid-item icon="todo-list-o" text="待收货" />
-                    <van-grid-item icon="chat-o" text="退换/售后" />
-                    <van-grid-item icon="orders-o" text="全部订单" />
+                    <van-grid-item icon="balance-list-o" text="待付款" @click="tip" />
+                    <van-grid-item icon="todo-list-o" text="待收货" @click="tip" />
+                    <van-grid-item icon="chat-o" text="退换/售后" @click="tip" />
+                    <van-grid-item icon="orders-o" text="全部订单" to="/order" />
                 </van-grid>
             </div>
             <div class="user-data-view">
                 <van-grid :border="false">
-                    <van-grid-item>
+                    <van-grid-item @click="tip">
                         <mark>0</mark>
                         <p>优惠券</p>
                     </van-grid-item>
-                    <van-grid-item>
+                    <van-grid-item @click="tip">
                         <mark>{{userInfo.score}}</mark>
                         <p>积分</p>
                     </van-grid-item>
@@ -49,7 +49,7 @@
                         <mark>{{userInfo.balance}}</mark>
                         <p>余额</p>
                     </van-grid-item>
-                    <van-grid-item icon="gold-coin-o" text="我的资产" />
+                    <van-grid-item icon="gold-coin-o" text="我的资产" @click="tip" />
                 </van-grid>
             </div>
         </div>
@@ -73,14 +73,14 @@ export default {
             return this.userInfo.sex == '男' ? '#1989fa' : '#ee0a24'
         }
     },
-    created(){
-
-    },
     methods: {
         toConfig(){
             this.$router.push({
                 path: '/config'
             })
+        },
+        tip(){
+            this.$toast('敬请期待...')
         }
     }
 }

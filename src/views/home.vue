@@ -21,8 +21,8 @@
 
 <script>
 import Vue from 'vue'
-import {Grid,GridItem,Swipe,SwipeItem} from 'vant'
-Vue.use(Grid).use(GridItem).use(Swipe).use(SwipeItem)
+import {Grid,GridItem,Swipe,SwipeItem,Dialog} from 'vant'
+Vue.use(Grid).use(GridItem).use(Swipe).use(SwipeItem).use(Dialog)
 
 export default {
     data(){
@@ -35,6 +35,21 @@ export default {
         this.$http.get('/api/goods').then(res=>{
             this.goodslist = res.data.data
         })
+    },
+    mounted(){
+        let {username,nickname,isNew} = this.$local.fetch('myshop')
+        if(isNew){
+            Dialog.alert({
+                title: '送钱啦！',
+                message: '送您50000块，快来消费吧^_^',
+            }).then(() => {
+                // on confirm
+                this.$local.save('myshop',{username,nickname,isNew:false})
+                this.$http.post('/api/gift',{username},res=>{
+                    console.log(res);
+                })
+            })
+        }
     }
 }
 </script>

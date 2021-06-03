@@ -14,9 +14,8 @@
                 </template>
             </van-swipe-cell>
         </div>
-        <van-submit-bar :price="totalPrice" button-text="提交订单" v-if="getUser.cartlist.length!=0">
+        <van-submit-bar :price="totalPrice" button-text="提交订单" v-if="getUser.cartlist.length!=0" @submit="buyGoods">
             <van-checkbox v-model="isCheckedAll">全选</van-checkbox>
-            <template #tip>你的收货地址不支持同城送</template>
         </van-submit-bar>
     </div>
 </template>
@@ -31,7 +30,7 @@ export default {
         return {
             checked: false,
             cartlist: [],
-            editRes: []
+            editRes: []     // 保存修改数量的购物车
         }
     },
     watch: {
@@ -75,24 +74,24 @@ export default {
     methods: {
         // 获取购物车中产品id列表，请求对应产品详情列表
         getCartlist(userInfo){
-            if(userInfo.cartlist.length){
-                let {cartlist} = userInfo
-                let cartlistid = cartlist.map(item=>item.id)
-                this.$http.get('/api/cart',{
-                    params: {
-                        cartlist: JSON.stringify(cartlistid)
-                    }
-                }).then(res=>{
-                    this.cartlist = res.data.data
-                    this.cartlist = this.cartlist.map(item=>({
-                        checked: false,
-                        info: item
-                    }))
-                    this.cartlist.forEach(item=>{
-                        this.editRes.push({id:item.info.id,num:item.info.num})
-                    })
+            let {cartlist} = userInfo
+            let cartlistid = cartlist.map(item=>item.id)
+            this.$http.get('/api/cart',{
+                params: {
+                    username: this.getUser.username,
+                    cartlist: JSON.stringify(cartlistid)
+                }
+            }).then(res=>{
+                this.cartlist = res.data.data
+                this.cartlist = this.cartlist.map(item=>({
+                    checked: false,
+                    info: item
+                }))
+                // 修改数量的购物车设置默认值
+                cartlist.forEach(item=>{
+                    this.editRes.push({id:item.id,num:item.num})
                 })
-            }
+            })
         },
         // 选中商品
         cartChecked(item){
@@ -119,6 +118,21 @@ export default {
             }).then(res=>{
                 this.editRes = res.data.data
             })
+        },
+        // 购物车提交订单
+        buyGoods(){
+            if(this.cartlist.some(item=>item.checked)){
+                let cartlistid = []
+                this.cartlist.forEach(item=>{
+                    if(item.checked){
+                        cartlistid.push(item.info._id)
+                    }
+                })
+                this.$router.push({
+                    path: '/buy',
+                    query: {pid: JSON.stringify(cartlistid)}
+                })
+            }
         }
     },
     // 离开页面时再提交mutation
@@ -134,8 +148,8 @@ export default {
 
 <style lang="css">
 .cart-item{ position: relative;}
-.cart-item .van-card{ padding-left: 30px;}
+.cart-item .van-card{ padding-left: 30px; background: #fff;}
 .cart-item .delete-button{ height: 100%;}
 .cart-item .van-checkbox{ position: absolute; z-index: 5; left: 5px; top: 50%; margin-top: -10px;}
-.cart-item .van-stepper{ position: absolute; z-index: 10; right: 8px; bottom: 8px;}
+.cart-item .van-stepper{ position: absolute; z-index: 10; right: 12px; bottom: 10px;}
 </style>

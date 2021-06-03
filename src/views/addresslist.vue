@@ -13,7 +13,9 @@ Vue.use(AddressList).use(Toast).use(Empty)
 export default {
     data(){
         return {
-            chosenAddressId: '0'
+            chosenAddressId: '0',
+            pid: '',    // 当前购买商品id
+            fromBuy: false  // 是否从购买页面跳转进入
         }
     },
     mixins: [getUserInfoMixin],
@@ -29,7 +31,29 @@ export default {
         // 选中地址
         onSelect(item){
             item.id = item._id
+            if(this.fromBuy){
+                this.$router.replace({
+                    path: '/buy',
+                    query: {
+                        pid: this.pid,
+                        address: {
+                            name: item.name,
+                            tel: item.tel,
+                            detail: item.addressDetail,
+                            ress: item.address
+                        }
+                    }
+                })
+            }
         }
+    },
+    beforeRouteEnter(to,from,next){
+        next(vm=>{
+            if(from.name=='Buy'){
+                vm.fromBuy = true
+                vm.pid = from.query.pid
+            }
+        })
     }
 }
 </script>

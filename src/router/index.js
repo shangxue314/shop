@@ -13,6 +13,8 @@ import AddressList from '@/views/addresslist'
 import AddressEdit from '@/views/addressedit'
 import Sort from '@/views/sort'
 import Search from '@/views/search'
+import Buy from '@/views/buy'
+import Order from '@/views/order'
 import store from '@/store'
 Vue.use(Router)
 
@@ -142,6 +144,24 @@ const router = new Router({
                 login: false
             },
             component: Search
+        },
+        {
+            path: '/buy',
+            name: 'Buy',
+            meta: {
+                title: '商品订单',
+                login: true
+            },
+            component: Buy
+        },
+        {
+            path: '/order',
+            name: 'Order',
+            meta: {
+                title: '我的订单',
+                login: true
+            },
+            component: Order
         },
         {
           path: '*',
