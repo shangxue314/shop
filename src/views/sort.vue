@@ -8,7 +8,7 @@
                 <h2>{{item.subtit}}</h2>
                 <van-grid :column-num="3" :border="false" :square="true">
                     <van-grid-item v-for="value in item.list" :key="value.name" :to="{path: `/search?sort=${sort[active].title}&${item.field}=${value.name}`}">
-                        <van-image :src="value.img" width="70" />
+                        <van-image :src="value.img" width="70"></van-image>
                         {{value.name}}
                     </van-grid-item>
                 </van-grid>
@@ -19,8 +19,8 @@
 
 <script>
 import Vue from 'vue'
-import {Sidebar,SidebarItem,Image} from 'vant'
-Vue.use(Sidebar).use(SidebarItem).use(Image)
+import {Sidebar,SidebarItem,Image,Grid,GridItem} from 'vant'
+Vue.use(Sidebar).use(SidebarItem).use(Image).use(Grid).use(GridItem)
 
 export default {
     data(){

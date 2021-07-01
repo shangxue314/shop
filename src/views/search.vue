@@ -4,7 +4,8 @@
             <van-dropdown-item v-model="rankValue" :options="rankList" @change="changeRank('salesValue')" />
             <van-dropdown-item v-model="salesValue" :options="salesList" @change="changeRank('rankValue')" />
         </van-dropdown-menu>
-        <van-empty image="search" description="没有商品" v-if="resultList.length==0" />
+        <van-empty image="search" description="没有商品" v-if="isEmpty" />
+        <van-loading type="spinner" color="#e4393c" v-if="isLoading" />
         <van-card v-for="item in resultList" :key="item._id" :price="item.price+'.00'" :title="item.name" :thumb="item.pic" @click="toGoods(item)">
             <template #tags>
                 <van-tag color="#eee" text-color="#999" v-for="value,i in item.info" :key="i">{{value}}</van-tag>
@@ -21,8 +22,8 @@
 
 <script>
 import Vue from 'vue'
-import {Card,Empty,DropdownMenu,DropdownItem} from 'vant'
-Vue.use(Card).use(Empty).use(DropdownMenu).use(DropdownItem)
+import {Card,Empty,DropdownMenu,DropdownItem,Tag,Loading} from 'vant'
+Vue.use(Card).use(Empty).use(DropdownMenu).use(DropdownItem).use(Tag).use(Loading)
 
 export default {
     data(){
@@ -40,7 +41,9 @@ export default {
                 { text: '销量', value: 'sales' },
                 { text: '评价', value: 'bbs' },
             ],
-            query: ''
+            query: '',
+            isLoading: true,
+            isEmpty: false
         }
     },
     methods: {
@@ -72,8 +75,12 @@ export default {
                     sales: vm.salesValue
                 }
             }).then(res=>{
-                console.log(res.data.data);
-                vm.resultList = res.data.data
+                vm.isLoading = false
+                if(res.data.code == 0){
+                    vm.resultList = res.data.data
+                }else{
+                    vm.isEmpty = true
+                }
             })
         })
     }
@@ -81,8 +88,11 @@ export default {
 </script>
 
 <style lang="css">
+.shop-search{ padding-bottom: 60px;}
 .van-card-sales{ display: flex;}
 .van-card-sales span{ display: block; width: 33.3333%;}
-.shop-search .van-tag{ margin-right: 5px;}
+.shop-search .van-card{ background: #fff;}
+.shop-search .van-tag{ margin: 2px;}
 .shop-search .van-card__price{ color: #ee0a24;}
+.shop-search .van-loading{ margin: 100px auto 0; text-align: center;}
 </style>

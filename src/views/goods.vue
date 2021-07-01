@@ -19,9 +19,8 @@
 <script>
 import Vue from 'vue'
 import {GoodsAction,GoodsActionIcon,GoodsActionButton} from 'vant'
-Vue.use(GoodsAction)
-Vue.use(GoodsActionIcon)
-Vue.use(GoodsActionButton)
+import getUserInfoMixin from '../mixins/getUserInfoMixin.js'
+Vue.use(GoodsAction).use(GoodsActionIcon).use(GoodsActionButton)
 export default {
     data(){
         return {
@@ -40,30 +39,30 @@ export default {
             }
         }
     },
+    mixins: [getUserInfoMixin],
     created(){
         // 获取商品详情
         this.$http.get('/api/goods/'+this.pid).then(res=>{
             this.goods = res.data.data
         })
         // 从store中判断商品是否已收藏
-        if(this.getUser.favlist){
-            this.setIsFav(this.getUser)
+        if(this.userInfo.favlist){
+            this.setIsFav()
         }
-    },
-    watch: {
-        // 刷新页面时监听用户信息的变化
-        getUser: {
-            deep: true,
-            handler(newVal){
-                this.setIsFav(newVal)
-            }
+        let {username} = this.userInfo
+        // 登录状态下商品添加到我的足迹
+        if(username){
+            this.$http.post('/api/footprint',{
+                username,
+                pid: this.pid
+            }).then(res=>{
+                this.$store.commit('setUser',{
+                    footprint: res.data.data
+                })
+            })
         }
     },
     computed: {
-        // 获取store中用户信息
-        getUser(){
-            return this.$store.state.user
-        },
         // 是否收藏
         isComFav(){
             return {
@@ -74,36 +73,50 @@ export default {
         },
         // 统计购物车商品数量
         getBadge(){
-            return this.$store.state.user.cartlist.length?this.$store.state.user.cartlist.reduce((pre,cur)=>pre+cur.num,0):''
+            return this.userInfo.cartlist.length?this.userInfo.cartlist.reduce((pre,cur)=>pre+cur.num,0):''
         }
     },
     methods: {
         // 设置收藏状态
-        setIsFav(data){
-            this.isFav = data.favlist.includes(this.pid)?true:false
+        setIsFav(){
+            this.isFav = this.userInfo.favlist.includes(this.pid)?true:false
         },
         // 加入购物车
         addCart(){
-            this.$http.post('/api/cart',{
-                username: this.getUser.username,
-                goodsid: this.pid
-            }).then(res=>{
-                this.$store.commit('setUser',{
-                    cartlist: res.data.data
+            let {username} = this.userInfo
+            if(username){
+                // 已登录
+                this.$http.post('/api/cart',{
+                    username,
+                    goodsid: this.pid
+                }).then(res=>{
+                    this.$store.commit('setUser',{
+                        cartlist: res.data.data
+                    })
                 })
-            })
+            }else{
+                // 未登录
+                this.$toast('请先登录')
+            }
         },
         // 加入收藏
         addFav(){
-            this.$http.post('/api/fav',{
-                username: this.getUser.username,
-                goodsid: this.pid
-            }).then(res=>{
-                this.isFav = res.data.data.includes(this.pid)?true:false
-                this.$store.commit('setUser',{
-                    favlist: res.data.data
+            let {username} = this.userInfo
+            if(username){
+                // 已登录
+                this.$http.post('/api/fav',{
+                    username,
+                    goodsid: this.pid
+                }).then(res=>{
+                    this.isFav = res.data.data.includes(this.pid)?true:false
+                    this.$store.commit('setUser',{
+                        favlist: res.data.data
+                    })
                 })
-            })
+            }else{
+                // 未登录
+                this.$toast('请先登录')
+            }
         },
         // 立即购买
         buyGoods(){
@@ -117,7 +130,7 @@ export default {
 </script>
 
 <style lang="css">
-.detail{ overflow: auto;}
+.detail{ overflow: auto; padding-bottom: 60px;}
 .detail>img{ width: 4rem; display: block; margin: 1rem auto;}
 .detail p{ font-size: .3rem; line-height: .5rem; padding: 0 1rem; display: flex; align-items: center; margin-top: .1rem;}
 .detail .van-goods-action{ z-index: 10000;}

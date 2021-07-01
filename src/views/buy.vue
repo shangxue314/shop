@@ -27,17 +27,19 @@
                     <h3>运费</h3>
                     <span>¥0</span>
                 </li>
-                <li>
+                <li @click="couponShow=true">
                     <h3>优惠券</h3>
-                    <span>去选择</span>
+                    <span class="red" v-if="couponSelectPrice">-¥{{couponSelectPrice+'.00'}}</span>
+                    <span v-else>去选择</span>
                     <van-icon name="arrow" />
                 </li>
-                <li>
+                <li @click="scoreShow=true">
                     <h3>积分({{userInfo.score}})</h3>
-                    <span>去选择</span>
+                    <span class="red" v-if="scoreSelect!='0'">-¥{{scoreSelect+'.00'}}</span>
+                    <span v-else>去选择</span>
                     <van-icon name="arrow" />
                 </li>
-                <li @click="popShow=true">
+                <li @click="balanceShow=true">
                     <h3>余额(¥{{userInfo.balance+'.00'}})</h3>
                     <span class="red" v-if="balanceSelect!='0'">-¥{{balanceSelect+'.00'}}</span>
                     <span v-else>去选择</span>
@@ -50,7 +52,20 @@
         <!--购买按钮-->
         <van-submit-bar :price="balanceSurplus*100" button-text="提交订单" @submit="buySubmit" />
 
-        <van-popup v-model="popShow" position="bottom" @click-overlay="popHide" @click-close-icon="popHide" closeable round>
+        <!--使用积分弹窗-->
+        <van-popup v-model="scoreShow" position="bottom" @click-overlay="scoreHide" @click-close-icon="scoreHide" closeable round>
+            <h2>积分</h2>
+            <div class="sel">
+                <div>账户积分{{userInfo.score}}</div>
+                <div><span v-show="scoreChecked">本单 已减¥{{scoreSelect+'.00'}}</span> <van-checkbox v-model="scoreChecked" checked-color="#ee0a24"></van-checkbox></div>
+            </div>
+            <div class="button">
+                <van-button round block type="info" color="linear-gradient(to right,#ff6034,#ee0a24)" @click="useScore">确定</van-button>
+            </div>
+        </van-popup>
+
+        <!--使用余额弹窗-->
+        <van-popup v-model="balanceShow" position="bottom" @click-overlay="balanceHide" @click-close-icon="balanceHide" closeable round>
             <h2>余额</h2>
             <div class="sel">
                 <div>账户余额¥{{userInfo.balance+'.00'}}</div>
@@ -60,44 +75,42 @@
                 <van-button round block type="info" color="linear-gradient(to right,#ff6034,#ee0a24)" @click="useBalance">确定</van-button>
             </div>
         </van-popup>
+
+        <!-- 优惠券列表 -->
+        <van-popup v-model="couponShow" position="bottom" closeable round>
+            <van-coupon-list :coupons="coupons" :chosen-coupon="chosenCoupon" :disabled-coupons="disabledCoupons" @change="useCoupon" :show-exchange-bar="false" />
+        </van-popup>
     </div>
 </template>
 
 <script>
 import Vue from 'vue'
-import {Card,Stepper,SubmitBar,Icon,Popup,Button,Checkbox,Toast} from 'vant'
+import {Card,Stepper,SubmitBar,Icon,Popup,Button,Checkbox,Toast,CouponList,Dialog} from 'vant'
 import getUserInfoMixin from '../mixins/getUserInfoMixin.js'
-Vue.use(Card).use(Stepper).use(SubmitBar).use(Icon).use(Popup).use(Button).use(Checkbox).use(Toast)
+Vue.use(Card).use(Stepper).use(SubmitBar).use(Icon).use(Popup).use(Button).use(Checkbox).use(Toast).use(CouponList).use(Dialog)
 export default {
     data(){
         return {
-            cartlist: [],
-            address: {},
-            popShow: false,
+            cartlist: [],                // 商品集合
+            address: {},                 // 地址列表
+            curAddress: {},              // 选中的地址
+            couponShow: false,           // 显示优惠券弹窗
+            coupons: [],                 // 可用优惠券列表
+            disabledCoupons: [],         // 不可用优惠券列表
+            sortlist: [],                // 优惠券商品分类
+            chosenCoupon: -1,            // 选中优惠券的索引
+            couponSelectPrice: '',       // 优惠券选中金额
+            couponSelectId: '',          // 优惠券选中_id
+            balanceShow: false,          // 显示账户余额弹窗
             balanceChecked: false,       // 余额选中状态
             isFixBalanceChecked: false,  // 固定余额选中(确定按钮确定)
-            editRes: []     // 保存修改数量的购物车
+            scoreShow: false,            // 显示账户积分弹窗
+            scoreChecked: false,         // 积分选中状态
+            isFixScoreChecked: false,    // 固定积分选中(确定按钮确定)
+            editRes: []                  // 保存修改数量的购物车
         }
     },
     mixins: [getUserInfoMixin],
-    watch: {
-        userInfo: {
-            deep: true,
-            handler(newVal){
-                // 处理收货地址address
-                if(newVal.address){
-                    let address = newVal.address.filter(item=>item.isDefault)[0]
-                    this.address = {
-                        name: address.name,
-                        tel: address.tel,
-                        detail: address.addressDetail,
-                        ress: address.city == address.province ? address.city + address.county : address.city + address.province + address.county
-                    }
-                }
-                this.getBuyGoods(newVal.username)
-            }
-        }
-    },
     computed: {
         // 计算总价
         totalPrice(){
@@ -115,11 +128,21 @@ export default {
             })
             return num
         },
+        // 积分使用数量
+        scoreSelect(){
+            if(this.scoreChecked){
+                // 使用积分
+                return this.userInfo.score > this.totalPrice/100 ? this.totalPrice/100 - this.couponSelectPrice : this.userInfo.score
+            }else{
+                // 不使用
+                return 0
+            }
+        },
         // 余额使用数量
         balanceSelect(){
             if(this.balanceChecked){
                 // 使用余额
-                return this.userInfo.balance > this.totalPrice/100 ? this.totalPrice/100 : this.userInfo.balance
+                return this.userInfo.balance > this.totalPrice/100 ? this.totalPrice/100 - this.couponSelectPrice - this.scoreSelect : this.userInfo.balance
             }else{
                 // 不使用
                 return 0
@@ -127,41 +150,93 @@ export default {
         },
         // 应付金额
         balanceSurplus(){
-            return this.totalPrice/100 - this.balanceSelect
+            return this.totalPrice/100 - this.couponSelectPrice - this.balanceSelect - this.scoreSelect
         }
     },
-    created(){
+    async created(){
+        // 修改数量的购物车设置默认值
+        this.editRes = []
+        this.userInfo.cartlist.forEach(item=>{
+            this.editRes.push({id:item.id,num:item.num})
+        })
+        // 判断是否已完善收货地址
+        if(this.userInfo.address.length==0){
+            Dialog.alert({
+                title: '登录提示',
+                message: `请先完善收货地址资料再下单哦`,
+            }).then(() => {
+                // on confirm
+                this.$router.replace({
+                    path: '/config'
+                })
+            })
+            return
+        }
+        // 处理收货地址address
+        let address = this.userInfo.address.filter(item=>item.isDefault)[0]
+        this.address = {
+            name: address.name,
+            tel: address.tel,
+            detail: address.addressDetail,
+            ress: address.city == address.province ? address.city + address.county : address.city + address.province + address.county
+        }
         // 商品购买获取详情
-        this.getBuyGoods(this.userInfo.username)
+        let cartlistid = this.$route.query.pid
+        let cartlistRes = await this.$http.get('/api/cart',{
+            params: {
+                username: this.userInfo.username,
+                cartlist: cartlistid
+            }
+        })
+        this.cartlist = cartlistRes.data.data
+        // 获取优惠券列表
+        this.cartlist.forEach(item=>{
+            this.sortlist.push(item.sort)
+        })
+        this.$http.get('/api/coupon',{
+            params: {
+                coupons: JSON.stringify(this.userInfo.coupons),
+                sortlist: JSON.stringify(this.sortlist)
+            }
+        }).then(res=>{
+            this.coupons = res.data.data.enable
+            this.disabledCoupons = res.data.data.disable
+        })
     },
     methods: {
-        // 商品购买获取详情
-        getBuyGoods(username){
-            if(username){
-                let cartlistid = this.$route.query.pid
-                this.$http.get('/api/cart',{
-                    params: {
-                        username: username,
-                        cartlist: cartlistid
-                    }
-                }).then(res=>{
-                    this.cartlist = res.data.data
-                    // 修改数量的购物车设置默认值
-                    this.editRes = []
-                    this.userInfo.cartlist.forEach(item=>{
-                        this.editRes.push({id:item.id,num:item.num})
-                    })
-                })
+        // 选择优惠券
+        useCoupon(index){
+            if(index==-1){
+                // 点击不使用优惠券
+                this.couponSelectPrice = ''
+                this.couponSelectId = ''
+                this.chosenCoupon = -1
+            }else{
+                // 使用优惠券
+                this.chosenCoupon = index
+                this.couponShow = false
+                this.couponSelectPrice = this.coupons[index].value
+                this.couponSelectId = this.coupons[index]._id
             }
+            this.couponShow = false
         },
         // 确定使用余额
         useBalance(){
             this.isFixBalanceChecked = this.balanceChecked
-            this.popShow = false
+            this.balanceShow = false
         },
         // 关闭余额pop
-        popHide(){
+        balanceHide(){
             this.balanceChecked = this.isFixBalanceChecked
+        },
+        // 确定使用积分
+        useScore(){
+            this.isFixScoreChecked = this.scoreChecked
+            this.scoreShow = false
+        },
+        // 关闭积分pop
+        scoreHide(){
+            this.scoreChecked = this.isFixScoreChecked
         },
         // 选择收货地址
         selAddress(){
@@ -184,16 +259,18 @@ export default {
                     num: this.totalNum,
                     name: this.address.name,
                     tel: this.address.tel,
-                    address: this.address.detail
+                    address: this.address.detail,
+                    couponId: this.couponSelectId,
+                    couponPrice: this.couponSelectPrice,
+                    score: this.scoreSelect
                 }).then(res=>{
                     this.$toast({
                         message: res.data.message,
                         onClose: ()=>{
                             if(res.data.code==0){
-                                // 更新store中balance数据
-                                this.$store.commit('setUser',{
-                                    balance: res.data.data
-                                })
+                                // 更新store中balance,coupons,score数据
+                                let {balance,coupons,score} = res.data.data
+                                this.$store.commit('setUser',{balance,coupons,score})
                                 // 跳转订单页
                                 this.$router.replace('/order')
                             }
@@ -235,6 +312,7 @@ export default {
 </script>
 
 <style lang="css">
+.shop-buy{ padding-bottom: 60px;}
 .shop-buy-address{ padding: 10px 20px; border-bottom: 2px dashed #eee; line-height: 22px; position: relative;}
 .shop-buy-address h2{ font-size: 16px;}
 .shop-buy-address p{ font-size: 12px; color: #666;}
@@ -246,7 +324,6 @@ export default {
 .shop-buy-info p{ border-top: 1px solid #eee; text-align: right; line-height: 24px; margin-top: 6px; padding-top: 6px;}
 .shop-buy-info p b{ color: #ee0a24; font-size: 14px;}
 .shop-buy-info .van-icon{ position: absolute; right: -12px; top: 50%; margin-top: -6px;}
-.shop-buy .cart-item{ padding: 10px 0;}
 .shop-buy .cart-item .van-card{ padding: 10px 20px;}
 .shop-buy .cart-item .van-stepper{ right: 20px;}
 .shop-buy .van-popup{ padding: 20px; box-sizing: border-box; min-height: 30%;}
@@ -255,6 +332,7 @@ export default {
 .shop-buy .van-popup .sel>div{ flex: auto; display: flex;}
 .shop-buy .van-popup .sel>div:last-child{ justify-content: flex-end;}
 .shop-buy .van-popup .sel .van-checkbox{ margin-left: 5px;}
+.shop-buy .van-popup .van-coupon-list h2{ font-size: 24px;}
 .shop-buy .button{ width:100%; position: absolute; left: 0; bottom: 0; padding: 20px; box-sizing: border-box;}
 .shop-buy .red{ color: #ee0a24;}
 </style>

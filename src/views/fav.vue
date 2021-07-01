@@ -8,6 +8,7 @@
 <script>
 import Vue from 'vue'
 import {Card,Empty} from 'vant'
+import getUserInfoMixin from '../mixins/getUserInfoMixin.js'
 Vue.use(Card).use(Empty)
 export default {
     data(){
@@ -15,39 +16,19 @@ export default {
             favlist: []
         }
     },
-    watch: {
-        getUser: {
-            deep: true,
-            handler(newVal){
-                this.getFavlist(newVal)
-            }
-        }
-    },
-    computed: {
-        // 获取用户信息
-        getUser(){
-            return this.$store.state.user
-        }
-    },
+    mixins: [getUserInfoMixin],
     created(){
-        this.getFavlist(this.getUser)
+        let {username,favlist} = this.userInfo
+        this.$http.get('/api/fav',{
+            params: {
+                username,
+                favlist
+            }
+        }).then(res=>{
+            this.favlist = res.data.data
+        })
     },
     methods: {
-        // 获取收藏中产品id列表，请求对应产品详情列表
-        getFavlist(userInfo){
-            if(userInfo.favlist.length){
-                let {favlist} = userInfo
-                // 统计每款商品数量
-                this.$http.get('/api/fav',{
-                    params: {
-                        favlist: JSON.stringify(favlist)
-                    }
-                }).then(res=>{
-                    this.favlist = res.data.data
-                })
-            }
-
-        },
         // 跳转商品详情
         toGoods(item){
             this.$router.push({path: '/goods/'+item._id})
@@ -57,4 +38,5 @@ export default {
 </script>
 
 <style lang="css">
+.cart .van-card{ background: #fff;}
 </style>

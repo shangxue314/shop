@@ -34,8 +34,7 @@ export default {
                             // 登录成功
                             this.$local.save('myshop',{
                                 nickname: res.data.data.nickname,
-                                username: res.data.data.username,
-                                isNew: true
+                                username: res.data.data.username
                             })
                             this.$http.get('/api/user',{
                                 params: {

@@ -10,15 +10,15 @@
             </dl>
             <van-grid :border="false" :column-num="3">
                 <van-grid-item to="/fav">
-                    <mark v-if="userInfo.favlist">{{userInfo.favlist.length}}</mark>
+                    <mark>{{userInfo.favlist.length}}</mark>
                     <p>商品收藏</p>
                 </van-grid-item>
                 <van-grid-item @click="tip">
                     <mark>0</mark>
                     <p>店铺收藏</p>
                 </van-grid-item>
-                <van-grid-item @click="tip">
-                    <mark>0</mark>
+                <van-grid-item to="/footprint">
+                    <mark>{{userInfo.footprint.length}}</mark>
                     <p>我的足迹</p>
                 </van-grid-item>
             </van-grid>
@@ -37,11 +37,11 @@
             </div>
             <div class="user-data-view">
                 <van-grid :border="false">
-                    <van-grid-item @click="tip">
-                        <mark>0</mark>
+                    <van-grid-item to="/coupon">
+                        <mark>{{userInfo.coupons.length}}</mark>
                         <p>优惠券</p>
                     </van-grid-item>
-                    <van-grid-item @click="tip">
+                    <van-grid-item to="/score">
                         <mark>{{userInfo.score}}</mark>
                         <p>积分</p>
                     </van-grid-item>

@@ -1,6 +1,7 @@
 <template lang="html">
     <div class="cart">
-        <van-empty image="search" description="购物车空空如也" v-if="getUser.cartlist.length==0" />
+        <van-empty image="search" description="购物车空空如也" v-if="userInfo.cartlist.length==0" />
+        <van-loading type="spinner" color="#e4393c" v-if="isLoading" />
         <div class="cart-item" v-for="item in cartlist" :key="item._id">
             <van-swipe-cell>
                 <van-checkbox v-model="item.checked"></van-checkbox>
@@ -14,7 +15,7 @@
                 </template>
             </van-swipe-cell>
         </div>
-        <van-submit-bar :price="totalPrice" button-text="提交订单" v-if="getUser.cartlist.length!=0" @submit="buyGoods">
+        <van-submit-bar :price="totalPrice" button-text="提交订单" v-if="userInfo.cartlist.length!=0" @submit="buyGoods">
             <van-checkbox v-model="isCheckedAll">全选</van-checkbox>
         </van-submit-bar>
     </div>
@@ -22,30 +23,21 @@
 
 <script>
 import Vue from 'vue'
-import {Card,SubmitBar,Checkbox,Empty,SwipeCell,Stepper} from 'vant'
-Vue.use(Card).use(SubmitBar).use(Checkbox).use(Empty).use(SwipeCell).use(Stepper)
+import {Card,SubmitBar,Checkbox,Empty,SwipeCell,Stepper,Button,Loading} from 'vant'
+import getUserInfoMixin from '../mixins/getUserInfoMixin.js'
+Vue.use(Card).use(SubmitBar).use(Checkbox).use(Empty).use(SwipeCell).use(Stepper).use(Button).use(Loading)
 
 export default {
     data(){
         return {
             checked: false,
+            isLoading: true,
             cartlist: [],
             editRes: []     // 保存修改数量的购物车
         }
     },
-    watch: {
-        getUser: {
-            deep: true,
-            handler(newVal){
-                this.getCartlist(newVal)
-            }
-        }
-    },
+    mixins: [getUserInfoMixin],
     computed: {
-        // 获取用户信息
-        getUser(){
-            return this.$store.state.user
-        },
         // 是否全选
         isCheckedAll: {
             get(){
@@ -69,25 +61,26 @@ export default {
         }
     },
     created(){
-        this.getCartlist(this.getUser)
+        this.getCartlist()
     },
     methods: {
         // 获取购物车中产品id列表，请求对应产品详情列表
-        getCartlist(userInfo){
-            let {cartlist} = userInfo
+        getCartlist(){
+            let {cartlist} = this.userInfo
             let cartlistid = cartlist.map(item=>item.id)
             this.$http.get('/api/cart',{
                 params: {
-                    username: this.getUser.username,
+                    username: this.userInfo.username,
                     cartlist: JSON.stringify(cartlistid)
                 }
             }).then(res=>{
-                this.cartlist = res.data.data
-                this.cartlist = this.cartlist.map(item=>({
+                this.isLoading =  false
+                this.cartlist = res.data.data.map(item=>({
                     checked: false,
                     info: item
                 }))
                 // 修改数量的购物车设置默认值
+                this.editRes = []
                 cartlist.forEach(item=>{
                     this.editRes.push({id:item.id,num:item.num})
                 })
@@ -102,7 +95,7 @@ export default {
             this.cartlist.splice(this.cartlist.indexOf(item),1)
             this.$http.delete('/api/cart',{
                 data: {
-                    username: this.getUser.username,
+                    username: this.userInfo.username,
                     goodsid: item.info._id
                 }
             }).then(res=>{
@@ -112,7 +105,7 @@ export default {
         // 修改商品数量
         editSum(item){
             this.$http.put('/api/cart',{
-                username: this.getUser.username,
+                username: this.userInfo.username,
                 goodsid: item.info._id,
                 num: item.info.num
             }).then(res=>{
@@ -152,4 +145,5 @@ export default {
 .cart-item .delete-button{ height: 100%;}
 .cart-item .van-checkbox{ position: absolute; z-index: 5; left: 5px; top: 50%; margin-top: -10px;}
 .cart-item .van-stepper{ position: absolute; z-index: 10; right: 12px; bottom: 10px;}
+.cart .van-loading{ margin: 100px auto 0; text-align: center;}
 </style>

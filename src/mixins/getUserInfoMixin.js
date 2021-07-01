@@ -20,7 +20,7 @@ export default {
         }
     },
     created(){
-        this.getUserInfo(this.$store.state.user)
+        this.getUserInfo(this.getUser)
     },
     methods: {
         getUserInfo(data){

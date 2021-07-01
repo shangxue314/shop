@@ -2,7 +2,7 @@ import axios from 'axios'
 import Vue from 'vue'
 import {Toast} from 'vant'
 Vue.use(Toast)
-axios.defaults.timeout = 2500
+axios.defaults.timeout = 8000
 axios.defaults.retry = 3
 axios.defaults.retryDelay = 1000
 

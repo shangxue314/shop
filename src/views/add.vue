@@ -46,6 +46,8 @@ export default {
                 sort: '',
                 price: '',
                 pic: '',
+                sales: 0,
+                bbs: 0,
                 info: {}
             },
             sorts: ['手机','电脑'],
